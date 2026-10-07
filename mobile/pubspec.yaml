@@ -1,0 +1,25 @@
+name: nylex_app
+description: "NYLEX Internal Business Management Mobile Application"
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.9
+  provider: ^6.1.5+1
+  http: ^1.6.0
+  flutter_secure_storage: ^9.2.4
+  intl: ^0.20.2
+  web_socket_channel: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
