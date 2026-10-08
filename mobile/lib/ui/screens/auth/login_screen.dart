@@ -15,8 +15,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: "druva@nylex.online");
-  final _passwordController = TextEditingController(text: "NylexDruva@2026");
+  final _emailController = TextEditingController(text: "admin");
+  final _passwordController = TextEditingController(text: "123");
   bool _obscurePassword = true;
 
   @override
@@ -186,15 +186,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Email
+                  // Email / Username
                   TextFormField(
                     controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
+                    keyboardType: TextInputType.text,
                     decoration: const InputDecoration(
-                      labelText: "Work Email",
-                      prefixIcon: Icon(Icons.email_outlined, size: 20),
+                      labelText: "Username or Email",
+                      prefixIcon: Icon(Icons.person_outline, size: 20),
                     ),
-                    validator: (v) => v == null || v.isEmpty ? "Enter your email" : null,
+                    validator: (v) => v == null || v.trim().isEmpty ? "Enter your username or email" : null,
                   ),
                   const SizedBox(height: 16),
 
@@ -231,44 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : const Text("Sign In", style: TextStyle(fontSize: 16)),
                   ),
-                  const SizedBox(height: 24),
 
-                  // Quick Switch Chips for the 2 Users
-                  const Center(
-                    child: Text(
-                      "QUICK LOGIN FOR AUTHORIZED USERS",
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 0.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            _emailController.text = "druva@nylex.online";
-                            _passwordController.text = "NylexDruva@2026";
-                          },
-                          child: const Text("User 1 (Druva)"),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            _emailController.text = "partner@nylex.online";
-                            _passwordController.text = "NylexPartner@2026";
-                          },
-                          child: const Text("User 2 (Partner)"),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),

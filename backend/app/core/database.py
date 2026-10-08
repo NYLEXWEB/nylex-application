@@ -144,38 +144,55 @@ async def seed_initial_users():
     from datetime import datetime, timezone
     db = get_database()
     try:
-        user_count = await db.users.count_documents({})
-        if user_count == 0:
-            now = datetime.now(timezone.utc).isoformat()
-            users = [
-                {
-                    "id": "USR-001",
-                    "name": "Druva (Owner 1)",
-                    "email": "druva@nylex.online",
+        now = datetime.now(timezone.utc).isoformat()
+        pass_123_hash = get_password_hash("123")
+        
+        # 1. Guarantee primary Admin user exists with email: "admin" and password: "123"
+        await db.users.update_one(
+            {"email": "admin"},
+            {
+                "$set": {
+                    "id": "USR-ADMIN",
+                    "name": "Admin",
+                    "email": "admin",
                     "phone": "+91 98765 43210",
-                    "hashedPassword": get_password_hash("NylexDruva@2026"),
+                    "hashedPassword": pass_123_hash,
                     "role": "OWNER",
                     "isActive": True,
                     "isDeleted": False,
-                    "createdAt": now,
                     "updatedAt": now,
-                    "lastLoginAt": None,
                 },
-                {
-                    "id": "USR-002",
-                    "name": "Partner (Owner 2)",
-                    "email": "partner@nylex.online",
-                    "phone": "+91 98765 43211",
-                    "hashedPassword": get_password_hash("NylexPartner@2026"),
-                    "role": "PARTNER",
-                    "isActive": True,
-                    "isDeleted": False,
+                "$setOnInsert": {
                     "createdAt": now,
-                    "updatedAt": now,
                     "lastLoginAt": None,
                 }
-            ]
-            await db.users.insert_many(users)
-            logger.info("Default NYLEX users seeded successfully.")
+            },
+            upsert=True
+        )
+
+        # 2. Also ensure admin@nylex.online with password "123" works as an alias
+        await db.users.update_one(
+            {"email": "admin@nylex.online"},
+            {
+                "$set": {
+                    "id": "USR-ADMIN-ALIAS",
+                    "name": "Admin",
+                    "email": "admin@nylex.online",
+                    "phone": "+91 98765 43210",
+                    "hashedPassword": pass_123_hash,
+                    "role": "OWNER",
+                    "isActive": True,
+                    "isDeleted": False,
+                    "updatedAt": now,
+                },
+                "$setOnInsert": {
+                    "createdAt": now,
+                    "lastLoginAt": None,
+                }
+            },
+            upsert=True
+        )
+
+        logger.info("Admin user ('admin' / '123') verified and seeded successfully in MongoDB.")
     except Exception as e:
         logger.warning(f"Failed to seed initial users: {e}")

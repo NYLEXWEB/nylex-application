@@ -1,7 +1,7 @@
 class ApiConstants {
-  // Configurable base URL: can be switched between Localhost, LAN, or Production
-  static const String defaultBaseUrl = "http://localhost:8000";
-  static const String productionBaseUrl = "https://api.nylex.online";
+  // Configurable base URL: Defaults to Render production server
+  static const String defaultBaseUrl = "https://nylex-application.onrender.com";
+  static const String localBaseUrl = "http://localhost:8000";
 
   static String baseUrl = defaultBaseUrl;
 

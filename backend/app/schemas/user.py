@@ -1,8 +1,8 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 class UserLoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class TokenResponse(BaseModel):
@@ -16,7 +16,7 @@ class RefreshTokenRequest(BaseModel):
 
 class UserCreateRequest(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     phone: Optional[str] = None
     role: str = "PARTNER"  # OWNER, PARTNER
     password: str
@@ -31,7 +31,7 @@ class UserUpdateRequest(BaseModel):
 class UserResponse(BaseModel):
     id: str
     name: str
-    email: EmailStr
+    email: str
     phone: Optional[str] = None
     role: str
     profilePhoto: Optional[str] = None

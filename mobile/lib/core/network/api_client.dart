@@ -16,7 +16,7 @@ class ApiException implements Exception {
 
 class ApiClient {
   static final http.Client _client = http.Client();
-  static const Duration _timeout = Duration(seconds: 15);
+  static const Duration _timeout = Duration(seconds: 60);
 
   static Future<Map<String, String>> _headers({bool requiresAuth = true}) async {
     final headers = <String, String>{
@@ -102,7 +102,8 @@ class ApiClient {
       return body;
     } else if (response.statusCode == 401) {
       AuthStorage.clearAuth();
-      throw ApiException("Session expired. Please login again.", statusCode: 401);
+      final msg = body is Map ? (body["detail"] ?? "Invalid email or password.") : "Invalid email or password.";
+      throw ApiException(msg.toString(), statusCode: 401);
     } else if (response.statusCode == 403) {
       throw ApiException("Access denied: You do not have permission for this action.", statusCode: 403);
     } else if (response.statusCode == 404) {
