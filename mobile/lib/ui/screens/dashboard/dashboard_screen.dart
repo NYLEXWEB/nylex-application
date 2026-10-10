@@ -14,6 +14,7 @@ import '../tasks/task_form_dialog.dart';
 import '../quotations/quotation_form_screen.dart';
 import '../invoices/invoice_form_screen.dart';
 import '../payments/add_payment_dialog.dart';
+import '../../widgets/server_settings_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -141,6 +142,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => showServerSettingsDialog(context),
+            tooltip: "Server / API Settings",
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => dashProvider.fetchDashboard(),

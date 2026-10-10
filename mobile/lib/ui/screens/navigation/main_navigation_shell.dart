@@ -18,7 +18,8 @@ import '../chat/chat_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../search/global_search_screen.dart';
 import '../audit/audit_screen.dart';
-import '../auth/login_screen.dart';
+import '../../widgets/server_settings_dialog.dart';
+import '../../../core/constants/api_constants.dart';
 
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({Key? key}) : super(key: key);
@@ -205,26 +206,21 @@ class MoreMenuScreen extends StatelessWidget {
           _menuTile(context, Icons.history, "Audit Trail", "Immutable system activity history", () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const AuditScreen()));
           }),
+          _menuTile(context, Icons.dns_outlined, "Server & API Settings", "Configure backend URL (${ApiConstants.baseUrl})", () {
+            showServerSettingsDialog(context);
+          }),
           const SizedBox(height: 20),
 
-          // Logout
+          // Server settings quick action
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.danger,
-              side: const BorderSide(color: AppColors.dangerLight),
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.border),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            onPressed: () async {
-              await auth.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
-            },
-            icon: const Icon(Icons.logout, size: 18),
-            label: const Text("Sign Out of NYLEX"),
+            onPressed: () => showServerSettingsDialog(context),
+            icon: const Icon(Icons.settings_outlined, size: 18),
+            label: const Text("Configure Backend Server URL"),
           ),
           const SizedBox(height: 40),
         ],

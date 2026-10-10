@@ -11,7 +11,6 @@ import 'providers/followups_provider.dart';
 import 'providers/finance_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/notifications_provider.dart';
-import 'ui/screens/auth/login_screen.dart';
 import 'ui/screens/navigation/main_navigation_shell.dart';
 
 void main() {
@@ -41,31 +40,8 @@ class NylexApp extends StatelessWidget {
         title: 'NYLEX Management',
         theme: AppTheme.lightTheme,
         debugShowCheckedModeBanner: false,
-        home: const AuthGate(),
+        home: const MainNavigationShell(),
       ),
     );
-  }
-}
-
-class AuthGate extends StatelessWidget {
-  const AuthGate({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
-
-    if (!auth.isInitialized) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (auth.isAuthenticated) {
-      return const MainNavigationShell();
-    }
-
-    return const LoginScreen();
   }
 }
