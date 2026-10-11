@@ -6,6 +6,7 @@ class DomainInfoSchema(BaseModel):
     domainExtension: Optional[str] = None
     registrar: Optional[str] = None
     purchaseEmail: Optional[str] = None
+    purchaseEmailPassword: Optional[str] = None
     purchaseDate: Optional[str] = None
     expiryDate: Optional[str] = None
 
@@ -14,7 +15,7 @@ class ClientCreate(BaseModel):
     businessName: str = Field(..., min_length=1)
     phone: str = Field(..., min_length=5)
     whatsapp: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     location: Optional[str] = None
     address: Optional[str] = None
     website: Optional[str] = None
@@ -30,7 +31,7 @@ class ClientUpdate(BaseModel):
     businessName: Optional[str] = None
     phone: Optional[str] = None
     whatsapp: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     location: Optional[str] = None
     address: Optional[str] = None
     website: Optional[str] = None

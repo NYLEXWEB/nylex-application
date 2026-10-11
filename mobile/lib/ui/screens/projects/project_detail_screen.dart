@@ -4,7 +4,6 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/project_model.dart';
 import '../../../models/daily_update_model.dart';
-import '../../../models/task_model.dart';
 import '../../../providers/projects_provider.dart';
 import '../../../providers/tasks_provider.dart';
 import '../../widgets/status_chip.dart';

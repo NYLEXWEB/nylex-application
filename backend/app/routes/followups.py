@@ -161,3 +161,19 @@ async def complete_followup(followup_id: str, current_user: dict = Depends(get_c
         description=f"Completed follow-up for {res.get('leadName') or res.get('clientName')}."
     )
     return {"message": "Follow-up marked as completed."}
+
+@router.delete("/{followup_id}")
+async def delete_followup(followup_id: str, current_user: dict = Depends(get_current_active_user)):
+    db = get_database()
+    res = await db.followups.delete_one({"id": followup_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Follow-up not found.")
+    await log_audit_event(
+        user_id=current_user["id"],
+        user_name=current_user["name"],
+        action="DELETE_FOLLOWUP",
+        entity_type="FOLLOWUP",
+        entity_id=followup_id,
+        description=f"Deleted follow-up {followup_id}."
+    )
+    return {"message": "Follow-up deleted successfully."}

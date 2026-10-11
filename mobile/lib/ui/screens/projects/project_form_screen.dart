@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../models/project_model.dart';
-import '../../../models/client_model.dart';
 import '../../../providers/projects_provider.dart';
 import '../../../providers/clients_provider.dart';
 

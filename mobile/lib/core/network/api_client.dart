@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../storage/auth_storage.dart';
-import '../constants/api_constants.dart';
 
 class ApiException implements Exception {
   final String message;

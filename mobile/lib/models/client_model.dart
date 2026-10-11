@@ -3,6 +3,7 @@ class DomainInfoModel {
   final String? domainExtension;
   final String? registrar;
   final String? purchaseEmail;
+  final String? purchaseEmailPassword;
   final String? purchaseDate;
   final String? expiryDate;
 
@@ -11,6 +12,7 @@ class DomainInfoModel {
     this.domainExtension,
     this.registrar,
     this.purchaseEmail,
+    this.purchaseEmailPassword,
     this.purchaseDate,
     this.expiryDate,
   });
@@ -21,6 +23,7 @@ class DomainInfoModel {
       domainExtension: json['domainExtension'],
       registrar: json['registrar'],
       purchaseEmail: json['purchaseEmail'],
+      purchaseEmailPassword: json['purchaseEmailPassword'],
       purchaseDate: json['purchaseDate'],
       expiryDate: json['expiryDate'],
     );
@@ -32,6 +35,7 @@ class DomainInfoModel {
       'domainExtension': domainExtension,
       'registrar': registrar,
       'purchaseEmail': purchaseEmail,
+      'purchaseEmailPassword': purchaseEmailPassword,
       'purchaseDate': purchaseDate,
       'expiryDate': expiryDate,
     };

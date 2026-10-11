@@ -88,6 +88,16 @@ class ClientsProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteClient(String id) => archiveClient(id);
+
+  Future<ClientModel?> updateClientStatus(String id, String status, {Map<String, dynamic>? domainInfo}) async {
+    final body = <String, dynamic>{'status': status};
+    if (domainInfo != null) {
+      body['domainInfo'] = domainInfo;
+    }
+    return await updateClient(id, body);
+  }
+
   Future<List<dynamic>> fetchClientTimeline(String clientId) async {
     try {
       final res = await ApiClient.get(ApiConstants.clientTimeline(clientId));

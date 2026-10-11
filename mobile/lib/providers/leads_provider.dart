@@ -124,4 +124,6 @@ class LeadsProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> deleteLead(String id) => archiveLead(id);
 }

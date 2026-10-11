@@ -24,6 +24,34 @@ class _FollowupsScreenState extends State<FollowupsScreen> {
     });
   }
 
+  void _confirmDelete(BuildContext context, String id, String name) {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final provider = Provider.of<FollowupsProvider>(context, listen: false);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Follow-up"),
+        content: Text("Are you sure you want to delete the follow-up for '$name'?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await provider.deleteFollowup(id);
+              if (mounted) {
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(content: Text("Follow-up deleted")),
+                );
+              }
+            },
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<FollowupsProvider>(context);
@@ -102,6 +130,7 @@ class _FollowupsScreenState extends State<FollowupsScreen> {
                     itemBuilder: (context, index) {
                       final item = provider.followups[index];
                       final isPending = item.status == "Pending";
+                      final displayName = item.leadName ?? item.clientName ?? "Contact";
 
                       return Card(
                         child: Padding(
@@ -114,11 +143,24 @@ class _FollowupsScreenState extends State<FollowupsScreen> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      item.leadName ?? item.clientName ?? "Contact",
+                                      displayName,
                                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                                     ),
                                   ),
-                                  StatusChip(status: item.status),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      StatusChip(status: item.status),
+                                      const SizedBox(width: 4),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        tooltip: "Delete Follow-up",
+                                        onPressed: () => _confirmDelete(context, item.id, displayName),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                               if (item.leadBusiness != null) ...[

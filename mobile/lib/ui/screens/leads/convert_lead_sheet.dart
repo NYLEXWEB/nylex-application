@@ -62,8 +62,7 @@ class _ConvertLeadSheetState extends State<ConvertLeadSheet> {
       Provider.of<ProjectsProvider>(context, listen: false).fetchProjects();
 
       if (mounted) {
-        Navigator.pop(context);
-        Navigator.pop(context); // Return to lead list
+        Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Lead successfully converted to Client & Project!"),

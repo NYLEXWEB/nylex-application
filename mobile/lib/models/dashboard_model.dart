@@ -1,7 +1,9 @@
 class DashboardSummaryModel {
   final int totalLeads;
   final int activeClients;
+  final int completedClients;
   final int activeProjects;
+  final int completedProjects;
   final int pendingFollowUps;
   final double totalRevenue;
   final double collectedRevenue;
@@ -10,7 +12,9 @@ class DashboardSummaryModel {
   DashboardSummaryModel({
     this.totalLeads = 0,
     this.activeClients = 0,
+    this.completedClients = 0,
     this.activeProjects = 0,
+    this.completedProjects = 0,
     this.pendingFollowUps = 0,
     this.totalRevenue = 0.0,
     this.collectedRevenue = 0.0,
@@ -21,7 +25,9 @@ class DashboardSummaryModel {
     return DashboardSummaryModel(
       totalLeads: json['totalLeads'] ?? 0,
       activeClients: json['activeClients'] ?? 0,
+      completedClients: json['completedClients'] ?? 0,
       activeProjects: json['activeProjects'] ?? 0,
+      completedProjects: json['completedProjects'] ?? 0,
       pendingFollowUps: json['pendingFollowUps'] ?? 0,
       totalRevenue: (json['totalRevenue'] as num?)?.toDouble() ?? 0.0,
       collectedRevenue: (json['collectedRevenue'] as num?)?.toDouble() ?? 0.0,

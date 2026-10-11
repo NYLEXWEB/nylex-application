@@ -42,22 +42,22 @@ class LeadDetailScreen extends StatelessWidget {
     );
   }
 
-  void _confirmArchive(BuildContext context) {
+  void _confirmDelete(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Archive Lead"),
-        content: Text("Are you sure you want to archive lead '${lead.name}'?"),
+        title: const Text("Delete Lead"),
+        content: Text("Are you sure you want to delete lead '${lead.name}'?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () async {
               Navigator.pop(ctx);
-              await Provider.of<LeadsProvider>(context, listen: false).archiveLead(lead.id);
+              await Provider.of<LeadsProvider>(context, listen: false).deleteLead(lead.id);
               Navigator.pop(context);
             },
-            child: const Text("Archive"),
+            child: const Text("Delete"),
           ),
         ],
       ),
@@ -78,8 +78,9 @@ class LeadDetailScreen extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.archive_outlined, color: AppColors.danger),
-            onPressed: () => _confirmArchive(context),
+            icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+            tooltip: "Delete Lead",
+            onPressed: () => _confirmDelete(context),
           ),
         ],
       ),

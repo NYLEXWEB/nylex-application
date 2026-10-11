@@ -8,6 +8,8 @@ import '../../widgets/empty_view.dart';
 import '../../widgets/error_view.dart';
 import 'lead_detail_screen.dart';
 import 'lead_form_screen.dart';
+import 'convert_lead_sheet.dart';
+import '../../../models/lead_model.dart';
 
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({Key? key}) : super(key: key);
@@ -31,6 +33,27 @@ class _LeadsScreenState extends State<LeadsScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _confirmDeleteLead(BuildContext context, LeadModel lead) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Lead"),
+        content: Text("Are you sure you want to delete lead '${lead.name}'?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await Provider.of<LeadsProvider>(context, listen: false).deleteLead(lead.id);
+            },
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -206,7 +229,47 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                       ),
                                     ],
                                   ),
-                                ]
+                                ],
+                                const SizedBox(height: 10),
+                                const Divider(height: 1),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    if (lead.status != "Won")
+                                      ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.success,
+                                          foregroundColor: Colors.white,
+                                          visualDensity: VisualDensity.compact,
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        ),
+                                        onPressed: () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                                            ),
+                                            builder: (_) => ConvertLeadSheet(lead: lead),
+                                          );
+                                        },
+                                        icon: const Icon(Icons.swap_horiz, size: 16),
+                                        label: const Text("Convert to Client", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      )
+                                    else
+                                      const Chip(
+                                        label: Text("Converted to Client", style: TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.bold)),
+                                        backgroundColor: AppColors.successLight,
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
+                                      tooltip: "Delete Lead",
+                                      onPressed: () => _confirmDeleteLead(context, lead),
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
                           ),

@@ -15,9 +15,14 @@ async def get_dashboard_data(current_user: dict = Depends(get_current_active_use
     # 1. Counts
     total_leads = await db.leads.count_documents({"isDeleted": {"$ne": True}})
     active_clients = await db.clients.count_documents({"isDeleted": {"$ne": True}, "status": "Active"})
+    completed_clients = await db.clients.count_documents({"isDeleted": {"$ne": True}, "status": "Completed"})
     active_projects = await db.projects.count_documents({
         "isDeleted": {"$ne": True},
         "status": {"$in": ["Planning", "In Progress", "Review"]}
+    })
+    completed_projects = await db.projects.count_documents({
+        "isDeleted": {"$ne": True},
+        "status": {"$in": ["Delivered", "Completed"]}
     })
     pending_followups = await db.followups.count_documents({"status": "Pending"})
 
@@ -60,7 +65,9 @@ async def get_dashboard_data(current_user: dict = Depends(get_current_active_use
         summary=DashboardSummaryCards(
             totalLeads=total_leads,
             activeClients=active_clients,
+            completedClients=completed_clients,
             activeProjects=active_projects,
+            completedProjects=completed_projects,
             pendingFollowUps=pending_followups,
             totalRevenue=round(total_revenue, 2),
             collectedRevenue=round(collected_revenue, 2),

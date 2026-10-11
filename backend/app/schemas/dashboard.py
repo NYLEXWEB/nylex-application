@@ -6,7 +6,9 @@ class DashboardSummaryCards(BaseModel):
 
     totalLeads: int = 0
     activeClients: int = 0
+    completedClients: int = 0
     activeProjects: int = 0
+    completedProjects: int = 0
     pendingFollowUps: int = 0
     totalRevenue: float = 0.0
     collectedRevenue: float = 0.0

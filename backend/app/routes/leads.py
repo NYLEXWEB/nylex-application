@@ -291,9 +291,13 @@ async def convert_lead_to_client(
         description=f"Converted lead '{lead.get('name')}' to Client '{client_doc['businessName']}' (Client ID: {client_id}, Project ID: {project_id})."
     )
 
+    # Remove MongoDB ObjectId from client_doc to prevent JSON serialization error
+    client_response = dict(client_doc)
+    client_response.pop("_id", None)
+
     return {
         "message": "Lead successfully converted to Client.",
         "clientId": client_id,
         "projectId": project_id,
-        "client": client_doc,
+        "client": client_response,
     }

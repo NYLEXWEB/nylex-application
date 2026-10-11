@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../core/utils/validators.dart';
 import '../../../providers/finance_provider.dart';
 import '../../../providers/clients_provider.dart';
-import '../../../providers/projects_provider.dart';
 
 class AddPaymentDialog extends StatefulWidget {
   final String? invoiceId;

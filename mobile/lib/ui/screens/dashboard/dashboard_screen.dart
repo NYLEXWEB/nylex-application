@@ -192,6 +192,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   iconColor: AppColors.purple,
                 ),
                 StatCard(
+                  title: "Completed Projects",
+                  value: "${(summary?.completedProjects ?? 0) > 0 ? summary!.completedProjects : (summary?.completedClients ?? 0)}",
+                  icon: Icons.task_alt,
+                  iconColor: AppColors.info,
+                ),
+                StatCard(
                   title: "Pending Follow-ups",
                   value: "${summary?.pendingFollowUps ?? 0}",
                   icon: Icons.phone_callback_outlined,
@@ -202,6 +208,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   value: Formatters.formatCurrency(summary?.totalRevenue ?? 0),
                   icon: Icons.account_balance_wallet_outlined,
                   iconColor: AppColors.success,
+                ),
+                StatCard(
+                  title: "Collected Revenue",
+                  value: Formatters.formatCurrency(summary?.collectedRevenue ?? 0),
+                  icon: Icons.check_circle_outline,
+                  iconColor: AppColors.accent,
                 ),
                 StatCard(
                   title: "Pending Payments",

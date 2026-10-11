@@ -85,4 +85,16 @@ class FollowupsProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> deleteFollowup(String id) async {
+    try {
+      await ApiClient.delete("${ApiConstants.followups}/$id");
+      _followups.removeWhere((f) => f.id == id);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
 }

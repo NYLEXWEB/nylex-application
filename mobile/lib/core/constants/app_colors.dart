@@ -16,12 +16,15 @@ class AppColors {
   static const Color dangerLight = Color(0xFFFEE2E2);
   static const Color purple = Color(0xFF8B5CF6);
   static const Color purpleLight = Color(0xFFEDE9FE);
+  static const Color info = Color(0xFF0EA5E9);         // Sky 500
+  static const Color infoLight = Color(0xFFE0F2FE);
 
   // Background & Surfaces
   static const Color background = Color(0xFFF8FAFC);  // Slate 50
   static const Color surface = Color(0xFFFFFFFF);     // Pure White
   static const Color surfaceCard = Color(0xFFFFFFFF);
   static const Color border = Color(0xFFE2E8F0);       // Slate 200
+  static const Color cardBorder = Color(0xFFE2E8F0);
   static const Color divider = Color(0xFFF1F5F9);
 
   // Text Hierarchy
