@@ -19,6 +19,8 @@ class InvoiceModel {
   final double paidAmount;
   final double balanceAmount;
   final String status; // Draft, Sent, Partially Paid, Paid, Overdue, Cancelled
+  final bool domainIncluded;
+  final String? paymentType;
   final String? notes;
   final String? pdfUrl;
   final String createdAt;
@@ -38,6 +40,8 @@ class InvoiceModel {
     this.discount = 0.0,
     this.tax = 0.0,
     this.taxRate = 0.0,
+    this.domainIncluded = false,
+    this.paymentType = "Full Payment",
     this.total = 0.0,
     this.paidAmount = 0.0,
     this.balanceAmount = 0.0,
@@ -66,6 +70,8 @@ class InvoiceModel {
       discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
       tax: (json['tax'] as num?)?.toDouble() ?? 0.0,
       taxRate: (json['taxRate'] as num?)?.toDouble() ?? 0.0,
+      domainIncluded: json['domainIncluded'] ?? false,
+      paymentType: json['paymentType'] ?? 'Full Payment',
       total: (json['total'] as num?)?.toDouble() ?? 0.0,
       paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0.0,
       balanceAmount: (json['balanceAmount'] as num?)?.toDouble() ?? 0.0,
@@ -85,6 +91,8 @@ class InvoiceModel {
       'items': items.map((e) => e.toJson()).toList(),
       'discount': discount,
       'taxRate': taxRate,
+      'domainIncluded': domainIncluded,
+      'paymentType': paymentType,
       'notes': notes,
       'status': status,
     };

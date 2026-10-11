@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../providers/followups_provider.dart';
 
@@ -21,6 +22,9 @@ class _FollowupFormDialogState extends State<FollowupFormDialog> {
   late TextEditingController _timeController;
   late TextEditingController _notesController;
 
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 10, minute: 30);
+
   String _method = "Call";
   int _reminderMinutes = 15;
   bool _isSaving = false;
@@ -28,9 +32,10 @@ class _FollowupFormDialogState extends State<FollowupFormDialog> {
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
-    _dateController = TextEditingController(text: DateFormat('yyyy-MM-dd').format(now));
-    _timeController = TextEditingController(text: DateFormat('HH:mm').format(now.add(const Duration(hours: 1))));
+    _dateController = TextEditingController(text: DateFormat('yyyy-MM-dd').format(_selectedDate));
+    _timeController = TextEditingController(
+      text: "${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}",
+    );
     _notesController = TextEditingController();
   }
 
@@ -40,6 +45,38 @@ class _FollowupFormDialogState extends State<FollowupFormDialog> {
     _timeController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate.isBefore(now) ? now : _selectedDate,
+      firstDate: now,
+      lastDate: DateTime(2035),
+      helpText: "SELECT FUTURE FOLLOW-UP DATE",
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+        _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      helpText: "SELECT FOLLOW-UP TIME",
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedTime = picked;
+        _timeController.text =
+            "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+      });
+    }
   }
 
   void _save() async {
@@ -58,7 +95,16 @@ class _FollowupFormDialogState extends State<FollowupFormDialog> {
 
     try {
       await Provider.of<FollowupsProvider>(context, listen: false).createFollowup(payload);
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Follow-up scheduled for ${_dateController.text} at ${_timeController.text} with notification reminder",
+            ),
+          ),
+        );
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -71,46 +117,93 @@ class _FollowupFormDialogState extends State<FollowupFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.leadName != null ? "Follow-up: ${widget.leadName}" : "Schedule Follow-up"),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.phone_callback, color: AppColors.warning, size: 22),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              widget.leadName != null ? "Follow-up: ${widget.leadName}" : "Schedule Follow-up",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _dateController,
-                      decoration: const InputDecoration(labelText: "Date (YYYY-MM-DD)"),
-                      validator: (v) => Validators.required(v),
+              // Visual Future Date Picker
+              InkWell(
+                onTap: _pickDate,
+                borderRadius: BorderRadius.circular(10),
+                child: IgnorePointer(
+                  child: TextFormField(
+                    controller: _dateController,
+                    decoration: const InputDecoration(
+                      labelText: "Follow-up Date *",
+                      hintText: "Select future date",
+                      prefixIcon: Icon(Icons.calendar_month, color: AppColors.accent, size: 20),
+                      suffixIcon: Icon(Icons.arrow_drop_down),
                     ),
+                    validator: (v) => Validators.required(v),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _timeController,
-                      decoration: const InputDecoration(labelText: "Time (HH:MM)"),
-                      validator: (v) => Validators.required(v),
-                    ),
-                  ),
-                ],
+                ),
               ),
               const SizedBox(height: 12),
+
+              // Visual Time Picker
+              InkWell(
+                onTap: _pickTime,
+                borderRadius: BorderRadius.circular(10),
+                child: IgnorePointer(
+                  child: TextFormField(
+                    controller: _timeController,
+                    decoration: const InputDecoration(
+                      labelText: "Follow-up Time *",
+                      hintText: "Select time",
+                      prefixIcon: Icon(Icons.access_time, color: AppColors.accent, size: 20),
+                      suffixIcon: Icon(Icons.arrow_drop_down),
+                    ),
+                    validator: (v) => Validators.required(v),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Contact Method
               DropdownButtonFormField<String>(
                 value: _method,
-                decoration: const InputDecoration(labelText: "Contact Method"),
+                decoration: const InputDecoration(
+                  labelText: "Contact Method",
+                  prefixIcon: Icon(Icons.contact_phone_outlined, size: 20),
+                ),
                 items: ["Call", "WhatsApp", "Email", "Meeting", "Other"]
                     .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                     .toList(),
                 onChanged: (val) => setState(() => _method = val!),
               ),
               const SizedBox(height: 12),
+
+              // Phone Notification Reminder
               DropdownButtonFormField<int>(
                 value: _reminderMinutes,
-                decoration: const InputDecoration(labelText: "Reminder Notification"),
+                decoration: const InputDecoration(
+                  labelText: "Phone Notification Alert",
+                  prefixIcon: Icon(Icons.notifications_active_outlined, color: AppColors.warning, size: 20),
+                ),
                 items: const [
+                  DropdownMenuItem(value: 0, child: Text("At event time")),
                   DropdownMenuItem(value: 15, child: Text("15 minutes before")),
                   DropdownMenuItem(value: 30, child: Text("30 minutes before")),
                   DropdownMenuItem(value: 60, child: Text("1 hour before")),
@@ -118,10 +211,15 @@ class _FollowupFormDialogState extends State<FollowupFormDialog> {
                 onChanged: (val) => setState(() => _reminderMinutes = val!),
               ),
               const SizedBox(height: 12),
+
+              // Agenda / Notes
               TextFormField(
                 controller: _notesController,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: "Agenda / Notes"),
+                decoration: const InputDecoration(
+                  labelText: "Agenda / Discussion Notes",
+                  prefixIcon: Icon(Icons.notes, size: 20),
+                ),
               ),
             ],
           ),
@@ -130,10 +228,11 @@ class _FollowupFormDialogState extends State<FollowupFormDialog> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
         ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
           onPressed: _isSaving ? null : _save,
           child: _isSaving
               ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text("Schedule"),
+              : const Text("Schedule & Alert"),
         ),
       ],
     );

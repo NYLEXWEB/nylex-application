@@ -127,4 +127,16 @@ class ProjectsProvider extends ChangeNotifier {
     }
     return null;
   }
+
+  Future<void> deleteProject(String id) async {
+    try {
+      await ApiClient.delete("${ApiConstants.projects}/$id");
+      _projects.removeWhere((p) => p.id == id);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
 }

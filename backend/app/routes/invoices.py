@@ -58,6 +58,8 @@ async def create_invoice(
     totals = calculate_invoice_totals(items_list, inv_in.discount, inv_in.taxRate)
 
     inv_doc = inv_in.model_dump()
+    if not inv_doc.get("dueDate"):
+        inv_doc["dueDate"] = inv_in.invoiceDate
     inv_doc.update({
         "id": inv_id,
         "invoiceNumber": inv_id,

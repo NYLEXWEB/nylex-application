@@ -195,65 +195,73 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(
-                            client.businessName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: AppColors.textPrimary,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                client.businessName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Contact: ${client.clientName} • ${client.phone}",
+                                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                              ),
+                              if (client.domainInfo?.domainName != null) ...[
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.language, size: 14, color: AppColors.primary),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "Domain: ${client.domainInfo!.domainName}",
+                                      style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        StatusChip(status: client.status),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            StatusChip(status: client.status),
+                            const SizedBox(height: 6),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              tooltip: "Delete Client",
+                              onPressed: () => _confirmDeleteClient(context, client),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Contact: ${client.clientName} • ${client.phone}",
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                    ),
-                    if (client.domainInfo?.domainName != null) ...[
-                      const SizedBox(height: 6),
+                    if (client.assignedToName != null) ...[
+                      const SizedBox(height: 10),
+                      const Divider(height: 1),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.language, size: 14, color: AppColors.primary),
+                          const Icon(Icons.person_outline, size: 14, color: AppColors.accent),
                           const SizedBox(width: 4),
                           Text(
-                            "Domain: ${client.domainInfo!.domainName}",
-                            style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+                            "Assigned: ${client.assignedToName}",
+                            style: const TextStyle(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
                     ],
-                    const SizedBox(height: 10),
-                    const Divider(height: 1),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (client.assignedToName != null)
-                          Row(
-                            children: [
-                              const Icon(Icons.person_outline, size: 14, color: AppColors.accent),
-                              const SizedBox(width: 4),
-                              Text(
-                                "Assigned: ${client.assignedToName}",
-                                style: const TextStyle(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          )
-                        else
-                          const SizedBox.shrink(),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
-                          tooltip: "Delete Client",
-                          onPressed: () => _confirmDeleteClient(context, client),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),

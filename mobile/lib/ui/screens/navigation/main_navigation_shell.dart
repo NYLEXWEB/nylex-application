@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
@@ -30,6 +31,7 @@ class MainNavigationShell extends StatefulWidget {
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
+  Timer? _notificationPollTimer;
 
   final List<Widget> _primaryScreens = [
     const DashboardScreen(),
@@ -47,7 +49,65 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         Provider.of<ChatProvider>(context, listen: false).initWebSocket(user.id);
         Provider.of<NotificationsProvider>(context, listen: false).fetchNotifications();
       }
+
+      // Check for follow-up reminders and notifications every 30 seconds
+      _notificationPollTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
+        if (!mounted) return;
+        final notifProvider = Provider.of<NotificationsProvider>(context, listen: false);
+        final prevCount = notifProvider.unreadCount;
+        await notifProvider.fetchNotifications();
+        if (!mounted) return;
+
+        if (notifProvider.unreadCount > prevCount && notifProvider.notifications.isNotEmpty) {
+          final latest = notifProvider.notifications.first;
+          if (!latest.isRead) {
+            final isDueFollowup = latest.type == "FOLLOWUP_DUE" || latest.type == "FOLLOWUP_ASSIGNED";
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: isDueFollowup ? AppColors.warning : AppColors.primary,
+                duration: const Duration(seconds: 8),
+                content: Row(
+                  children: [
+                    Icon(
+                      isDueFollowup ? Icons.alarm_on : Icons.notifications_active,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(latest.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text(latest.message, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                action: SnackBarAction(
+                  label: "VIEW",
+                  textColor: Colors.white,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                    );
+                  },
+                ),
+              ),
+            );
+          }
+        }
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _notificationPollTimer?.cancel();
+    super.dispose();
   }
 
   @override

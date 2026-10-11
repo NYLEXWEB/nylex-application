@@ -23,6 +23,9 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> with SingleTick
   List<dynamic> _timeline = [];
   bool _isLoadingTimeline = false;
   bool _hideDomainPassword = true;
+  bool _isAddingNote = false;
+  bool _isSavingNote = false;
+  final TextEditingController _noteInputController = TextEditingController();
 
   @override
   void initState() {
@@ -46,8 +49,40 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> with SingleTick
 
   @override
   void dispose() {
+    _noteInputController.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitNewNote() async {
+    final text = _noteInputController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() => _isSavingNote = true);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final provider = Provider.of<ClientsProvider>(context, listen: false);
+
+    try {
+      final updated = await provider.addClientNote(_client.id, text);
+      if (updated != null && mounted) {
+        setState(() {
+          _client = updated;
+          _isAddingNote = false;
+          _noteInputController.clear();
+        });
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text("New update posted as Note #1")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text("Failed to post note: $e"), backgroundColor: AppColors.danger),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingNote = false);
+    }
   }
 
   void _confirmDelete() {
@@ -494,17 +529,139 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> with SingleTick
                 const SizedBox(height: 16),
               ],
 
-              // Notes Section
-              if (_client.notes != null && _client.notes!.isNotEmpty) ...[
-                const Text("Client Notes", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
+              // Client Notes & Updates Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Client Notes & Updates", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  IconButton(
+                    icon: Icon(_isAddingNote ? Icons.close : Icons.add_circle, color: AppColors.accent, size: 24),
+                    tooltip: _isAddingNote ? "Cancel" : "Add Note / Update",
+                    onPressed: () {
+                      setState(() => _isAddingNote = !_isAddingNote);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Note Input Form (when + is tapped)
+              if (_isAddingNote) ...[
+                Card(
+                  color: AppColors.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: AppColors.accent, width: 1.5),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextField(
+                          controller: _noteInputController,
+                          maxLines: 3,
+                          autofocus: true,
+                          decoration: const InputDecoration(
+                            hintText: "Type update for this client (e.g. Domain registered, Client requested redesign...)",
+                            border: InputBorder.none,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => setState(() {
+                                _isAddingNote = false;
+                                _noteInputController.clear();
+                              }),
+                              child: const Text("Cancel"),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
+                              onPressed: _isSavingNote ? null : _submitNewNote,
+                              child: _isSavingNote
+                                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : const Text("Add Note"),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // Notes List (Reverse Chronological: #1 is newest)
+              if (_client.clientNotes.isNotEmpty)
+                ..._client.clientNotes.asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final note = entry.value;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  "Note #${idx + 1}",
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ),
+                              if (note.createdAt.isNotEmpty)
+                                Text(
+                                  Formatters.formatDateTime(note.createdAt),
+                                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            note.text,
+                            style: const TextStyle(fontSize: 14, height: 1.4, color: AppColors.textPrimary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList()
+              else if (_client.notes != null && _client.notes!.isNotEmpty)
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(_client.notes!, style: const TextStyle(height: 1.4)),
                   ),
+                )
+              else
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Center(
+                      child: Text(
+                        "No notes added yet.\nTap '+' above to post the first update for this client.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
+                      ),
+                    ),
+                  ),
                 ),
-              ],
             ],
           ),
 

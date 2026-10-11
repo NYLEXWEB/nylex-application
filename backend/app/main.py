@@ -34,11 +34,56 @@ logging.basicConfig(
 )
 logger = logging.getLogger("nylex.main")
 
+import asyncio
+from datetime import datetime, timezone
+from app.services.notification_service import create_notification
+
+async def follow_up_checker():
+    while True:
+        try:
+            await asyncio.sleep(60)
+            from app.core.database import get_database
+            db = get_database()
+            if db is not None:
+                now_utc = datetime.now(timezone.utc)
+                today_str = now_utc.strftime("%Y-%m-%d")
+                time_str = now_utc.strftime("%H:%M")
+
+                due_followups = await db.followups.find({
+                    "status": "Pending",
+                    "scheduledDate": today_str,
+                    "reminderSent": {"$ne": True}
+                }).to_list(100)
+
+                for f in due_followups:
+                    f_time = f.get("scheduledTime", "00:00")
+                    if time_str >= f_time:
+                        target_user = f.get("assignedTo") or f.get("createdBy") or "USR-ADMIN"
+                        target_name = f.get("leadName") or f.get("clientName") or "Contact"
+                        await create_notification(
+                            user_id=target_user,
+                            title="Follow-up Reminder Due",
+                            message=f"Reminder: {f.get('method', 'Call')} with {target_name} is scheduled for {f.get('scheduledTime')} today!",
+                            notification_type="FOLLOWUP_DUE",
+                            related_entity_type="FOLLOWUP",
+                            related_entity_id=f.get("id"),
+                        )
+                        await db.followups.update_one(
+                            {"id": f.get("id")},
+                            {"$set": {"reminderSent": True}}
+                        )
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.error(f"Error in follow-up checker: {e}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing NYLEX Management API Backend...")
     await connect_to_mongo()
+    checker_task = asyncio.create_task(follow_up_checker())
     yield
+    checker_task.cancel()
     logger.info("Shutting down NYLEX Management API Backend...")
     await close_mongo_connection()
 

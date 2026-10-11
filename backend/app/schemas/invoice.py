@@ -6,10 +6,12 @@ class InvoiceCreate(BaseModel):
     clientId: str
     projectId: Optional[str] = None
     invoiceDate: str
-    dueDate: str
+    dueDate: Optional[str] = None
     items: List[LineItemSchema] = Field(default_factory=list)
     discount: float = 0.0
     taxRate: float = 0.0
+    domainIncluded: bool = False
+    paymentType: Optional[str] = "Full Payment"  # Advance, Balance, Full Payment
     notes: Optional[str] = None
     status: str = "Draft"  # Draft, Sent, Partially Paid, Paid, Overdue, Cancelled
 
@@ -19,6 +21,8 @@ class InvoiceUpdate(BaseModel):
     items: Optional[List[LineItemSchema]] = None
     discount: Optional[float] = None
     taxRate: Optional[float] = None
+    domainIncluded: Optional[bool] = None
+    paymentType: Optional[str] = None
     notes: Optional[str] = None
     status: Optional[str] = None
 
@@ -31,12 +35,14 @@ class InvoiceResponse(BaseModel):
     projectId: Optional[str] = None
     projectName: Optional[str] = None
     invoiceDate: str
-    dueDate: str
+    dueDate: Optional[str] = None
     items: List[LineItemSchema]
     subtotal: float
     discount: float
     tax: float
     taxRate: float
+    domainIncluded: bool = False
+    paymentType: Optional[str] = "Full Payment"
     total: float
     paidAmount: float = 0.0
     balanceAmount: float = 0.0

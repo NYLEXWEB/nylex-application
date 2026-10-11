@@ -92,15 +92,14 @@ async def create_followup(
         description=f"Scheduled {followup_in.method} follow-up for {lead_name or client_name or 'contact'} on {followup_in.scheduledDate} at {followup_in.scheduledTime}."
     )
 
-    if target_user_id != current_user["id"]:
-        await create_notification(
-            user_id=target_user_id,
-            title="Follow-up Assigned",
-            message=f"Follow-up with {lead_name or client_name} scheduled for {followup_in.scheduledDate} {followup_in.scheduledTime}.",
-            notification_type="FOLLOWUP_ASSIGNED",
-            related_entity_type="FOLLOWUP",
-            related_entity_id=flp_id,
-        )
+    await create_notification(
+        user_id=target_user_id,
+        title="Follow-up Scheduled",
+        message=f"Follow-up with {lead_name or client_name or 'contact'} scheduled for {followup_in.scheduledDate} at {followup_in.scheduledTime}.",
+        notification_type="FOLLOWUP_ASSIGNED",
+        related_entity_type="FOLLOWUP",
+        related_entity_id=flp_id,
+    )
 
     return FollowupResponse(**flp_doc)
 

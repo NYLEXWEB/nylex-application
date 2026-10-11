@@ -16,12 +16,18 @@ async def get_dashboard_data(current_user: dict = Depends(get_current_active_use
     total_leads = await db.leads.count_documents({"isDeleted": {"$ne": True}})
     active_clients = await db.clients.count_documents({"isDeleted": {"$ne": True}, "status": "Active"})
     completed_clients = await db.clients.count_documents({"isDeleted": {"$ne": True}, "status": "Completed"})
+    # Exclude projects belonging to deleted clients
+    deleted_clients = await db.clients.find({"isDeleted": True}, {"id": 1}).to_list(10000)
+    deleted_client_ids = [c["id"] for c in deleted_clients]
+
     active_projects = await db.projects.count_documents({
         "isDeleted": {"$ne": True},
+        "clientId": {"$nin": deleted_client_ids},
         "status": {"$in": ["Planning", "In Progress", "Review"]}
     })
     completed_projects = await db.projects.count_documents({
         "isDeleted": {"$ne": True},
+        "clientId": {"$nin": deleted_client_ids},
         "status": {"$in": ["Delivered", "Completed"]}
     })
     pending_followups = await db.followups.count_documents({"status": "Pending"})

@@ -23,6 +23,9 @@ async def list_projects(
 ):
     db = get_database()
     query: Dict[str, Any] = {"isDeleted": {"$ne": True}}
+    deleted_clients = await db.clients.find({"isDeleted": True}, {"id": 1}).to_list(10000)
+    if deleted_clients:
+        query["clientId"] = {"$nin": [c["id"] for c in deleted_clients]}
     if client_id:
         query["clientId"] = client_id
     if status and status != "All":
@@ -258,3 +261,31 @@ async def get_project_activity_feed(project_id: str, current_user: dict = Depend
 
     feed.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
     return feed
+
+@router.delete("/{project_id}")
+async def delete_project(project_id: str, current_user: dict = Depends(get_current_active_user)):
+    db = get_database()
+    existing = await db.projects.find_one({"id": project_id, "isDeleted": {"$ne": True}})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Project not found.")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.projects.update_one(
+        {"id": project_id},
+        {"$set": {"isDeleted": True, "deletedAt": now, "deletedBy": current_user["id"]}}
+    )
+    # Also soft delete tasks of this project
+    await db.tasks.update_many(
+        {"projectId": project_id},
+        {"$set": {"isDeleted": True, "deletedAt": now}}
+    )
+
+    await log_audit_event(
+        user_id=current_user["id"],
+        user_name=current_user["name"],
+        action="ARCHIVE_PROJECT",
+        entity_type="PROJECT",
+        entity_id=project_id,
+        description=f"Archived project '{existing.get('projectName')}'."
+    )
+    return {"message": "Project archived successfully."}

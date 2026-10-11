@@ -42,6 +42,38 @@ class DomainInfoModel {
   }
 }
 
+class ClientNoteItem {
+  final String id;
+  final String text;
+  final String createdAt;
+  final String? authorName;
+
+  ClientNoteItem({
+    required this.id,
+    required this.text,
+    required this.createdAt,
+    this.authorName,
+  });
+
+  factory ClientNoteItem.fromJson(Map<String, dynamic> json) {
+    return ClientNoteItem(
+      id: json['id'] ?? '',
+      text: json['text'] ?? '',
+      createdAt: json['createdAt'] ?? '',
+      authorName: json['authorName'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'text': text,
+      'createdAt': createdAt,
+      'authorName': authorName,
+    };
+  }
+}
+
 class ClientModel {
   final String id;
   final String clientName;
@@ -57,6 +89,7 @@ class ClientModel {
   final String? assignedTo;
   final String? assignedToName;
   final String? notes;
+  final List<ClientNoteItem> clientNotes;
   final String status; // Active, Completed, Inactive
   final DomainInfoModel? domainInfo;
   final String? createdBy;
@@ -78,6 +111,7 @@ class ClientModel {
     this.assignedTo,
     this.assignedToName,
     this.notes,
+    this.clientNotes = const [],
     required this.status,
     this.domainInfo,
     this.createdBy,
@@ -86,6 +120,20 @@ class ClientModel {
   });
 
   factory ClientModel.fromJson(Map<String, dynamic> json) {
+    List<ClientNoteItem> parsedNotes = [];
+    if (json['clientNotes'] != null && json['clientNotes'] is List) {
+      parsedNotes = (json['clientNotes'] as List).map((n) => ClientNoteItem.fromJson(n)).toList();
+    } else if (json['notes'] != null && (json['notes'] as String).trim().isNotEmpty) {
+      parsedNotes = [
+        ClientNoteItem(
+          id: 'initial',
+          text: json['notes'],
+          createdAt: json['createdAt'] ?? '',
+          authorName: 'Note',
+        )
+      ];
+    }
+
     return ClientModel(
       id: json['id'] ?? '',
       clientName: json['clientName'] ?? '',
@@ -101,6 +149,7 @@ class ClientModel {
       assignedTo: json['assignedTo'],
       assignedToName: json['assignedToName'],
       notes: json['notes'],
+      clientNotes: parsedNotes,
       status: json['status'] ?? 'Active',
       domainInfo: json['domainInfo'] != null ? DomainInfoModel.fromJson(json['domainInfo']) : null,
       createdBy: json['createdBy'],
@@ -123,6 +172,7 @@ class ClientModel {
       'leadSource': leadSource,
       'assignedTo': assignedTo,
       'notes': notes,
+      'clientNotes': clientNotes.map((n) => n.toJson()).toList(),
       'status': status,
       if (domainInfo != null) 'domainInfo': domainInfo!.toJson(),
     };

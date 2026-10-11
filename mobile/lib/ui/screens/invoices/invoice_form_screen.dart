@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/utils/validators.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../models/quotation_model.dart';
 import '../../../providers/finance_provider.dart';
 import '../../../providers/clients_provider.dart';
@@ -19,10 +19,11 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   String? _selectedClientId;
   String? _selectedProjectId;
   late TextEditingController _dateController;
-  late TextEditingController _dueDateController;
   late TextEditingController _discountController;
-  late TextEditingController _taxRateController;
   late TextEditingController _notesController;
+
+  bool _domainIncluded = false;
+  String _paymentType = "Advance"; // Advance, Balance, Full Payment
 
   final List<LineItemModel> _items = [
     LineItemModel(description: "Phase 1: Project Kickoff & Frontend Delivery", quantity: 1, rate: 25000, amount: 25000),
@@ -34,9 +35,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     super.initState();
     final now = DateTime.now();
     _dateController = TextEditingController(text: now.toString().substring(0, 10));
-    _dueDateController = TextEditingController(text: now.add(const Duration(days: 15)).toString().substring(0, 10));
     _discountController = TextEditingController(text: "0");
-    _taxRateController = TextEditingController(text: "18");
     _notesController = TextEditingController(text: "Bank Details:\nNYLEX Solutions • HDFC Bank • IFSC: HDFC0001234 • Acc: 50100987654321");
 
     final clients = Provider.of<ClientsProvider>(context, listen: false).clients;
@@ -46,9 +45,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   @override
   void dispose() {
     _dateController.dispose();
-    _dueDateController.dispose();
     _discountController.dispose();
-    _taxRateController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -71,16 +68,23 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       "clientId": _selectedClientId,
       "projectId": _selectedProjectId,
       "invoiceDate": _dateController.text.trim(),
-      "dueDate": _dueDateController.text.trim(),
+      "dueDate": _dateController.text.trim(),
       "discount": double.tryParse(_discountController.text.trim()) ?? 0.0,
-      "taxRate": double.tryParse(_taxRateController.text.trim()) ?? 0.0,
+      "taxRate": 0.0,
+      "domainIncluded": _domainIncluded,
+      "paymentType": _paymentType,
       "notes": _notesController.text.trim(),
       "items": _items.map((i) => i.toJson()).toList(),
     };
 
     try {
       await Provider.of<FinanceProvider>(context, listen: false).createInvoice(payload);
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invoice generated successfully")),
+        );
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
@@ -120,24 +124,88 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               onChanged: (val) => setState(() => _selectedProjectId = val),
             ),
             const SizedBox(height: 12),
+            TextFormField(
+              controller: _dateController,
+              readOnly: true,
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2035),
+                );
+                if (picked != null) {
+                  setState(() => _dateController.text = picked.toString().substring(0, 10));
+                }
+              },
+              decoration: const InputDecoration(
+                labelText: "Invoice Date",
+                prefixIcon: Icon(Icons.calendar_today, size: 20),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Payment Stage Selector
+            const Text(
+              "Payment Stage / Type",
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _dateController,
-                    decoration: const InputDecoration(labelText: "Invoice Date"),
-                    validator: (v) => Validators.required(v),
-                  ),
-                ),
+                _paymentTypeChip("Advance", Icons.payments_outlined),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _dueDateController,
-                    decoration: const InputDecoration(labelText: "Due Date"),
-                    validator: (v) => Validators.required(v),
-                  ),
-                ),
+                _paymentTypeChip("Balance", Icons.account_balance_wallet_outlined),
+                const SizedBox(width: 8),
+                _paymentTypeChip("Full Payment", Icons.done_all_outlined),
               ],
+            ),
+            const SizedBox(height: 16),
+
+            // Domain Included Switch
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border.all(
+                  color: _domainIncluded ? AppColors.accent : AppColors.cardBorder,
+                  width: _domainIncluded ? 1.5 : 1,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: _domainIncluded ? AppColors.accent.withOpacity(0.12) : AppColors.background,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.language, size: 20, color: _domainIncluded ? AppColors.accent : AppColors.textSecondary),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Domain Included in Price", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                          Text(
+                            _domainIncluded ? "Domain charges covered in invoice" : "Domain not included in this total",
+                            style: TextStyle(fontSize: 12, color: _domainIncluded ? AppColors.accent : AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Switch(
+                    value: _domainIncluded,
+                    activeColor: AppColors.accent,
+                    onChanged: (val) => setState(() => _domainIncluded = val),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
 
@@ -223,24 +291,13 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               );
             }),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _discountController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Discount (₹)"),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _taxRateController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Tax Rate (%)"),
-                  ),
-                ),
-              ],
+            TextFormField(
+              controller: _discountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Discount (₹)",
+                prefixIcon: Icon(Icons.local_offer_outlined, size: 20),
+              ),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -258,6 +315,33 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
             const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _paymentTypeChip(String type, IconData icon) {
+    final isSelected = _paymentType == type;
+    return Expanded(
+      child: ChoiceChip(
+        avatar: Icon(
+          icon,
+          size: 16,
+          color: isSelected ? Colors.white : AppColors.textSecondary,
+        ),
+        label: Text(
+          type,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? Colors.white : AppColors.textPrimary,
+          ),
+        ),
+        selected: isSelected,
+        selectedColor: AppColors.accent,
+        backgroundColor: AppColors.background,
+        onSelected: (val) {
+          if (val) setState(() => _paymentType = type);
+        },
       ),
     );
   }

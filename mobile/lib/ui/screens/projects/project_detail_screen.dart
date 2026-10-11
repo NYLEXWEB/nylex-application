@@ -97,6 +97,33 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> with SingleTi
     );
   }
 
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Project"),
+        content: Text("Are you sure you want to delete '${widget.project.projectName}'?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await Provider.of<ProjectsProvider>(context, listen: false).deleteProject(widget.project.id);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Project '${widget.project.projectName}' deleted")),
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final project = widget.project;
@@ -119,6 +146,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> with SingleTi
               tooltip: "Mark Delivered",
               onPressed: _markDelivered,
             ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+            tooltip: "Delete Project",
+            onPressed: _confirmDelete,
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,

@@ -39,8 +39,12 @@ class ClientUpdate(BaseModel):
     leadSource: Optional[str] = None
     assignedTo: Optional[str] = None
     notes: Optional[str] = None
+    clientNotes: Optional[List[dict]] = None
     status: Optional[str] = None
     domainInfo: Optional[DomainInfoSchema] = None
+
+class ClientNoteCreate(BaseModel):
+    text: str
 
 class ClientResponse(BaseModel):
     id: str
@@ -57,6 +61,7 @@ class ClientResponse(BaseModel):
     assignedTo: Optional[str] = None
     assignedToName: Optional[str] = None
     notes: Optional[str] = None
+    clientNotes: Optional[List[dict]] = None
     status: str
     domainInfo: Optional[DomainInfoSchema] = None
     createdBy: Optional[str] = None

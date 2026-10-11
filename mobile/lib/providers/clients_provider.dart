@@ -98,6 +98,26 @@ class ClientsProvider extends ChangeNotifier {
     return await updateClient(id, body);
   }
 
+  Future<ClientModel?> addClientNote(String id, String text) async {
+    try {
+      final res = await ApiClient.post("${ApiConstants.clients}/$id/notes", body: {'text': text});
+      if (res is Map<String, dynamic>) {
+        final updated = ClientModel.fromJson(res);
+        final index = _clients.indexWhere((c) => c.id == id);
+        if (index != -1) {
+          _clients[index] = updated;
+          notifyListeners();
+        }
+        return updated;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+    return null;
+  }
+
   Future<List<dynamic>> fetchClientTimeline(String clientId) async {
     try {
       final res = await ApiClient.get(ApiConstants.clientTimeline(clientId));

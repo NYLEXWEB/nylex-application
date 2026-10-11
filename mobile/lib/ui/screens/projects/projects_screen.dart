@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../models/project_model.dart';
 import '../../../providers/projects_provider.dart';
 import '../../widgets/status_chip.dart';
 import '../../widgets/empty_view.dart';
@@ -23,6 +24,34 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ProjectsProvider>(context, listen: false).fetchProjects();
     });
+  }
+
+  void _confirmDeleteProject(BuildContext context, ProjectModel project) {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final provider = Provider.of<ProjectsProvider>(context, listen: false);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Project"),
+        content: Text("Are you sure you want to delete '${project.projectName}'?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await provider.deleteProject(project.id);
+              if (mounted) {
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(content: Text("Project '${project.projectName}' deleted")),
+                );
+              }
+            },
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -126,24 +155,43 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
-                                      child: Text(
-                                        project.projectName,
-                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            project.projectName,
+                                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                                          ),
+                                          if (project.businessName != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              project.businessName!,
+                                              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
-                                    StatusChip(status: project.status),
+                                    const SizedBox(width: 8),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        StatusChip(status: project.status),
+                                        const SizedBox(height: 4),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          tooltip: "Delete Project",
+                                          onPressed: () => _confirmDeleteProject(context, project),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                                if (project.businessName != null) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    project.businessName!,
-                                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
-                                  ),
-                                ],
                                 const SizedBox(height: 8),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

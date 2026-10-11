@@ -1,9 +1,10 @@
+import uuid
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.core.database import get_database
 from app.core.security import get_current_active_user
-from app.schemas.client import ClientCreate, ClientUpdate, ClientResponse
+from app.schemas.client import ClientCreate, ClientUpdate, ClientResponse, ClientNoteCreate
 from app.utils.id_generator import generate_entity_id
 from app.services.audit_service import log_audit_event
 from app.services.notification_service import create_notification
@@ -141,6 +142,15 @@ async def delete_client(client_id: str, current_user: dict = Depends(get_current
         {"id": client_id},
         {"$set": {"isDeleted": True, "deletedAt": now, "deletedBy": current_user["id"]}}
     )
+    # Cascade soft delete to associated projects and tasks
+    await db.projects.update_many(
+        {"clientId": client_id},
+        {"$set": {"isDeleted": True, "deletedAt": now}}
+    )
+    await db.tasks.update_many(
+        {"clientId": client_id},
+        {"$set": {"isDeleted": True, "deletedAt": now}}
+    )
 
     await log_audit_event(
         user_id=current_user["id"],
@@ -151,6 +161,59 @@ async def delete_client(client_id: str, current_user: dict = Depends(get_current
         description=f"Archived client '{existing.get('businessName')}'."
     )
     return {"message": "Client archived successfully."}
+
+@router.post("/{client_id}/notes", response_model=ClientResponse)
+async def add_client_note(
+    client_id: str,
+    note_in: ClientNoteCreate,
+    current_user: dict = Depends(get_current_active_user)
+):
+    db = get_database()
+    existing = await db.clients.find_one({"id": client_id, "isDeleted": {"$ne": True}})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Client not found.")
+
+    now = datetime.now(timezone.utc).isoformat()
+    note_item = {
+        "id": str(uuid.uuid4())[:8],
+        "text": note_in.text.strip(),
+        "createdAt": now,
+        "authorName": current_user.get("name", "Admin"),
+    }
+
+    client_notes = existing.get("clientNotes") or []
+    if not client_notes and existing.get("notes"):
+        client_notes.append({
+            "id": "initial",
+            "text": existing["notes"],
+            "createdAt": existing.get("createdAt", now),
+            "authorName": "System",
+        })
+
+    # New note is #1 (at the very top)
+    client_notes.insert(0, note_item)
+    updated_notes_str = "\n\n".join([f"• {n['text']}" for n in client_notes])
+
+    res = await db.clients.find_one_and_update(
+        {"id": client_id},
+        {"$set": {
+            "clientNotes": client_notes,
+            "notes": updated_notes_str,
+            "updatedAt": now
+        }},
+        return_document=True
+    )
+
+    await log_audit_event(
+        user_id=current_user["id"],
+        user_name=current_user["name"],
+        action="ADD_CLIENT_NOTE",
+        entity_type="CLIENT",
+        entity_id=client_id,
+        description=f"Added note update for '{existing.get('businessName')}'."
+    )
+
+    return ClientResponse(**res)
 
 @router.get("/{client_id}/timeline")
 async def get_client_timeline(client_id: str, current_user: dict = Depends(get_current_active_user)):
